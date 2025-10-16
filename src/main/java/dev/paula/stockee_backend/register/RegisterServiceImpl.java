@@ -1,7 +1,7 @@
 package dev.paula.stockee_backend.register;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import dev.paula.stockee_backend.user.UserEntity;
 import dev.paula.stockee_backend.user.UserRepository;
