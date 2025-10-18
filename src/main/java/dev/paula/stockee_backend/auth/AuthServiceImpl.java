@@ -22,21 +22,21 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponseDTO login(AuthRequestDTO request) {
-        // Autentication
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid credentials");
+        }
 
-        // user
         UserEntity user = userRepository.findByEmail(request.getEmail())
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // token
         String token = jwtService.generateToken(user);
         String role = user.getRoles().stream()
-            .map(RoleEntity::getName)
-            .findFirst()
-            .orElse("ROLE_USER");
+                .map(RoleEntity::getName)
+                .findFirst()
+                .orElse("ROLE_USER");
 
         return new AuthResponseDTO(token, user.getUsername(), role);
     }

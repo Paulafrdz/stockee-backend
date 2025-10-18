@@ -8,7 +8,7 @@ import dev.paula.stockee_backend.implementations.IRegisterService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("${api-endpoint}/register")
+@RequestMapping("/api/register")
 @RequiredArgsConstructor
 public class RegisterController {
 
