@@ -2,6 +2,7 @@ package dev.paula.stockee_backend.register;
 
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,7 +26,6 @@ public class RegisterServiceImpl implements InterfaceRegisterService {
     @Override
     public RegisterResponseDTO register(RegisterRequestDTO request) {
 
-        // 1️⃣ Validar duplicados
         if (userRepository.findByEmail(request.email()).isPresent()) {
             throw new RuntimeException("Email ya registrado");
         }
@@ -34,7 +34,6 @@ public class RegisterServiceImpl implements InterfaceRegisterService {
             throw new RuntimeException("Username ya registrado");
         }
 
-        // 2️⃣ Crear entidad de usuario
         UserEntity user = UserEntity.builder()
                 .username(request.username())
                 .email(request.email())
@@ -43,15 +42,21 @@ public class RegisterServiceImpl implements InterfaceRegisterService {
 
         RoleEntity defaultRole = roleRepository.findByName("ROLE_USER")
                 .orElseThrow(() -> new RuntimeException("Rol ROLE_USER no encontrado"));
-        user.setRoles(Set.of(defaultRole));
 
-        // 3️⃣ Guardar usuario en base de datos
+        // Crear Set mutable
+        Set<RoleEntity> roles = new HashSet<>();
+        roles.add(defaultRole);
+        user.setRoles(roles);
+
+        defaultRole.getUsers().add(user);
+
+        // Guardar usuario una sola vez
         UserEntity savedUser = userRepository.save(user);
 
-        // 4️⃣ Devolver respuesta con DTO inmutable (record)
         return new RegisterResponseDTO(
                 savedUser.getId(),
                 savedUser.getUsername(),
                 savedUser.getEmail());
     }
+
 }

@@ -1,5 +1,6 @@
 package dev.paula.stockee_backend.role;
 
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -26,6 +27,6 @@ public class RoleEntity {
 
     @JsonIgnore
     @ManyToMany(mappedBy = "roles")
-    private Set<UserEntity> users;
+    private Set<UserEntity> users = new HashSet<>();
 
 }

@@ -10,4 +10,9 @@ services:
       - 'MYSQL_ROOT_PASSWORD=factoriaf5'
     ports:
       - '7885:3306'
+    volumes:
+      - stockee-data:/var/lib/mysql
+
+volumes:
+  stockee-data:
 
