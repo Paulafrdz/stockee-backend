@@ -9,5 +9,6 @@ public interface IStockService {
     List<StockEntity> getAll();
     StockEntity addItem(StockEntity item);
     StockEntity updateStock(Long id, double newStock);
+    StockEntity updateItem(Long id, StockEntity item);
     void deleteItem(Long id);
 }

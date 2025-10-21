@@ -27,6 +27,11 @@ public class StockController {
     }
 
     @PutMapping("/{id}")
+    public StockEntity updateItem(@PathVariable Long id, @RequestBody StockEntity item) {
+        return stockService.updateItem(id, item);
+    }
+
+    @PutMapping("/{id}/stock")
     public StockEntity updateStock(@PathVariable Long id, @RequestParam double newStock) {
         return stockService.updateStock(id, newStock);
     }

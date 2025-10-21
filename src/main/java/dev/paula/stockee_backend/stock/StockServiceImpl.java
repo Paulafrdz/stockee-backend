@@ -35,8 +35,21 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
+    public StockEntity updateItem(Long id, StockEntity updatedItem) {
+        StockEntity existingItem = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Item no encontrado"));
+        
+        existingItem.setName(updatedItem.getName());
+        existingItem.setCurrentStock(updatedItem.getCurrentStock());
+        existingItem.setMinimumStock(updatedItem.getMinimumStock());
+        existingItem.setUnit(updatedItem.getUnit());
+        existingItem.setLastUpdate(LocalDateTime.now());
+        
+        return repository.save(existingItem);
+    }
+
+    @Override
     public void deleteItem(Long id) {
         repository.deleteById(id);
     }
 }
-
