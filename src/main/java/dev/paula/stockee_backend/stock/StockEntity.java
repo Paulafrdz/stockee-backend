@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 @Entity
 @Table(name = "stock_items")
 @Getter
@@ -26,5 +28,6 @@ public class StockEntity {
 
     private String unit;
 
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime lastUpdate;
 }
