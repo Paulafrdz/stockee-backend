@@ -36,10 +36,3 @@ CREATE TABLE IF NOT EXISTS stock (
     unit VARCHAR(50)
 );
 
--- Insert sample stock data
-INSERT IGNORE INTO stock (name, current_stock, minimum_stock, unit) VALUES
-('Tomatoes', 2.5, 5.0, 'Kg'),
-('Mozzarella', 4.0, 3.0, 'Kg'),
-('Olive Oil', 1.2, 2.0, 'L'),
-('Flour', 8.0, 5.0, 'Kg'),
-('Onions', 3.0, 4.0, 'Kg');

@@ -18,18 +18,12 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final StockRepository stockRepository;
 
-    /**
-     * Implementación del método requerido por IOrderService.
-     * Retorna las recomendaciones de pedido.
-     */
     @Override
     public List<OrderResponseDTO> getRecommendedOrders() {
         return getRecommendations();
     }
 
-    /**
-     * Obtiene recomendaciones de pedido basadas en el stock actual
-     */
+    // Gets order recommendations based on current stock
     public List<OrderResponseDTO> getRecommendations() {
         List<StockEntity> allStock = stockRepository.findAll();
 
@@ -38,9 +32,7 @@ public class OrderServiceImpl implements OrderService {
             .collect(Collectors.toList());
     }
     
-    /**
-     * Calcula la recomendación para un item de stock
-     */
+    // Calculates the recommendation for a stock item
     private OrderResponseDTO calculateRecommendation(StockEntity stock) {
         OrderResponseDTO recommendation = new OrderResponseDTO();
         
@@ -49,15 +41,15 @@ public class OrderServiceImpl implements OrderService {
         recommendation.setCurrentStock(stock.getCurrentStock());
         recommendation.setMinimumStock(stock.getMinimumStock());
         recommendation.setUnit(stock.getUnit());
-        recommendation.setLastOrderDate(null); // Puedes cambiarlo si guardas fechas en Stock
+        recommendation.setLastOrderDate(null); 
         
-        // Calcular uso semanal (basado en stock mínimo)
+        // Calculate weekly usage (based on minimum stock)
         double weeklyUsage = stock.getMinimumStock() > 0
             ? stock.getMinimumStock()
             : 5.0;
         recommendation.setWeeklyUsage(weeklyUsage);
         
-        // Calcular cantidad recomendada
+        // Calculate recommended quantity
         double recommendedQty = calculateRecommendedQuantity(
             stock.getCurrentStock(),
             stock.getMinimumStock(),
@@ -65,21 +57,24 @@ public class OrderServiceImpl implements OrderService {
         );
         recommendation.setRecommendedQuantity(recommendedQty);
         
-        // Determinar prioridad
+        // Determine priority
         String priority = determinePriority(stock.getCurrentStock(), stock.getMinimumStock());
         recommendation.setPriority(priority);
         
         return recommendation;
     }
     
-    /**
-     * Calcula la cantidad recomendada
-     */
+    //Calculates the recommended quantity
+    
     private double calculateRecommendedQuantity(double currentStock, double minimumStock, double weeklyUsage) {
+        if (currentStock >= minimumStock * 1.2) {
+            return 0.0;
+        }
+        
         if (currentStock < minimumStock) {
             double shortage = minimumStock - currentStock;
             double weeklySupply = weeklyUsage * 2;
-            return Math.round((shortage + weeklySupply) * 10.0) / 10.0; // redondea a 1 decimal
+            return Math.round((shortage + weeklySupply) * 10.0) / 10.0; 
         }
         
         double threshold = minimumStock * 1.2;
@@ -90,9 +85,7 @@ public class OrderServiceImpl implements OrderService {
         return 0.0;
     }
     
-    /**
-     * Determina la prioridad
-     */
+    // Determines the priority
     private String determinePriority(double currentStock, double minimumStock) {
         if (minimumStock == 0) {
             return "low";
@@ -109,21 +102,20 @@ public class OrderServiceImpl implements OrderService {
         }
     }
     
-    /**
-     * Crea un nuevo pedido y actualiza el stock
-     */
+    //Creates a new order and updates the stock
+     
     @Transactional
     public void createOrder(OrderRequestDTO createOrderRequest) {
-        // Crear el pedido
+        // Create the order
         OrderEntity order = new OrderEntity();
         order.setOrderDate(LocalDateTime.now());
         
-        // Procesar cada item
+        // Process each item
         for (OrderItemRequestDTO itemRequest : createOrderRequest.getItems()) {
             StockEntity stock = stockRepository.findById(itemRequest.getId())
                 .orElseThrow(() -> new RuntimeException("Stock not found: " + itemRequest.getId()));
             
-            // Crear item del pedido
+            // Create order item
             OrderItemEntity orderItem = new OrderItemEntity();
             orderItem.setStock(stock);
             orderItem.setQuantity(java.math.BigDecimal.valueOf(itemRequest.getRecommendedQuantity()));
@@ -131,22 +123,19 @@ public class OrderServiceImpl implements OrderService {
             
             order.addItem(orderItem);
             
-            // ✅ ACTUALIZAR STOCK: Sumar la cantidad pedida
+            // ✅ UPDATE STOCK: Add the ordered quantity
             double newStock = stock.getCurrentStock() + itemRequest.getRecommendedQuantity();
             stock.setCurrentStock(newStock);
             stockRepository.save(stock);
         }
         
-        // Actualizar item count
         order.updateItemCount();
         
-        // Guardar pedido
         orderRepository.save(order);
     }
     
-    /**
-     * Obtiene el historial de pedidos (solo para ver)
-     */
+    //Gets order history (read-only)
+     
     public List<OrderHistoryResponseDTO> getOrderHistory(int limit) {
         PageRequest pageRequest = PageRequest.of(0, limit);
         
@@ -156,9 +145,7 @@ public class OrderServiceImpl implements OrderService {
             .collect(Collectors.toList());
     }
     
-    /**
-     * Convierte Order a DTO de historial
-     */
+    // Converts Order to History DTO 
     private OrderHistoryResponseDTO convertToHistoryDTO(OrderEntity order) {
         OrderHistoryResponseDTO dto = new OrderHistoryResponseDTO();
         dto.setId(order.getId());
