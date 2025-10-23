@@ -1,34 +1,37 @@
 package dev.paula.stockee_backend.orders;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import dev.paula.stockee_backend.implementations.IOrderService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
-@RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderServiceImpl orderService;
+    private final IOrderService orderService;
 
+    public OrderController(IOrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    // GET /api/order - for recommendations
     @GetMapping
-    public List<OrderResponseDTO> getAllOrders() {
-        return orderService.getAllOrders();
+    public List<OrderResponseDTO> getRecommendedOrders() {
+        return orderService.getRecommendedOrders();
     }
 
-    @GetMapping("/{id}")
-    public OrderResponseDTO getOrderById(@PathVariable Long id) {
-        return orderService.getOrderById(id);
-    }
-
+    // POST /api/order - for creating orders
     @PostMapping
-    public OrderResponseDTO createOrder(@RequestBody OrderRequestDTO request) {
-        return orderService.createOrder(request);
+    public void createOrder(@RequestBody OrderRequestDTO orderRequest) {
+        orderService.createOrder(orderRequest);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteOrder(@PathVariable Long id) {
-        orderService.deleteOrder(id);
+    // GET /api/order/history - for order history
+    @GetMapping("/history")
+    public List<OrderHistoryResponseDTO> getOrderHistory(
+            @RequestParam(defaultValue = "50") int limit) {
+        return orderService.getOrderHistory(limit);
     }
 }

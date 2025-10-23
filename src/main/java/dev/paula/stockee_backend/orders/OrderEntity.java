@@ -1,42 +1,51 @@
 package dev.paula.stockee_backend.orders;
 
-import dev.paula.stockee_backend.stock.StockEntity;
+
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class OrderEntity {
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // Relación con el ingrediente asociado
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ingredient_id", nullable = false)
-    private StockEntity ingredient;
-
-    @Column(nullable = false)
-    private Double currentStock;
-
-    @Column(nullable = false)
-    private Double minimumStock;
-
-    @Column(nullable = false)
-    private Double weeklyUsage;
-
-    @Column(nullable = false)
-    private Double recommendedQuantity;
-
-    @Column(nullable = false)
-    private String status; 
-
-    @Column(nullable = false)
-    private String createdAt;
+    
+    @Column(name = "order_date", nullable = false)
+    private LocalDateTime orderDate;
+    
+    @Column(name = "item_count")
+    private Integer itemCount;
+    
+    @Column(length = 500)
+    private String notes;
+    
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItemEntity> items = new ArrayList<>();
+    
+    @PrePersist
+    protected void onCreate() {
+        if (orderDate == null) {
+            orderDate = LocalDateTime.now();
+        }
+    }
+    
+    // Helper methods
+    public void addItem(OrderItemEntity item) {
+        items.add(item);
+        item.setOrder(this);
+    }
+    
+    public void updateItemCount() {
+        this.itemCount = items.size();
+    }
 }

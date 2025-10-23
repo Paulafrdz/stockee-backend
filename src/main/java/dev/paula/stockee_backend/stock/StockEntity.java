@@ -30,4 +30,6 @@ public class StockEntity {
 
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime lastUpdate;
+
+    
 }
