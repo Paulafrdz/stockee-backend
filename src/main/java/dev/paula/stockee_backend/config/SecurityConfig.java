@@ -37,27 +37,32 @@ public class SecurityConfig {
 
     @Value("${api-endpoint}")
     private String endpoint;
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+            .cors(cors -> cors.configurationSource(corsConfiguration()))
+            .csrf(csrf -> csrf
+                    .ignoringRequestMatchers("/h2-console/**")
+                    .disable())
+            .headers(header -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/h2-console/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, endpoint + "/register").permitAll()
+                    .requestMatchers(HttpMethod.POST, endpoint + "/auth/token").authenticated()
+                    
+                    .requestMatchers(endpoint + "/users/**").authenticated()
+                    .requestMatchers(endpoint + "/stock/**").authenticated()
+                    .requestMatchers(endpoint + "/orders/**").authenticated()
+                    .requestMatchers(endpoint + "/waste/**").authenticated()
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> cors.configurationSource(corsConfiguration()))
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/h2-console/**")
-                        .disable())
-                .headers(header -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, endpoint + "/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, endpoint + "/auth/token").authenticated()
-                        .requestMatchers(endpoint + "/users/**").authenticated()
-                        .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.decoder(jwtDecoder())))
-                .httpBasic(withDefaults());
+                    
+                    .anyRequest().authenticated())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.decoder(jwtDecoder())))
+            .httpBasic(withDefaults());
 
-        return http.build();
-    }
+    return http.build();
+}
 
     @Bean
     JwtEncoder jwtEncoder() {

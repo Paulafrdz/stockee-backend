@@ -1,12 +1,11 @@
 package dev.paula.stockee_backend.waste;
 
+import dev.paula.stockee_backend.stock.StockEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
-
-import dev.paula.stockee_backend.stock.StockEntity;
 
 @Entity
 @Table(name = "waste")
