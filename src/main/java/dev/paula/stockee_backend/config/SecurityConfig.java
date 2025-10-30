@@ -55,6 +55,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                     .requestMatchers(endpoint + "/orders/**").authenticated()
                     .requestMatchers(endpoint + "/waste/**").authenticated()
                     .requestMatchers(endpoint + "/analytics/**").authenticated()
+                    .requestMatchers(endpoint + "/dashboard/**").authenticated()
 
                     
                     .anyRequest().authenticated())
