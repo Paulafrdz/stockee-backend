@@ -164,28 +164,71 @@ sequenceDiagram
 
 ---
 
-## 6. Database Schema
+## 6. Entity Relationship Diagram
 
-``` mermaid
-%%{init: {'theme': 'default'}}%%
+
+```mermaid
 erDiagram
-    USER {
-        BIGINT id PK
-        VARCHAR username
-        VARCHAR email
-        VARCHAR password
-        BIGINT role_id FK
+    USER_ENTITY ||--o{ USER_ROLES : has
+    ROLE_ENTITY ||--o{ USER_ROLES : assigned_to
+    STOCK_ENTITY ||--o{ WASTE_ENTITY : tracks
+    STOCK_ENTITY ||--o{ ORDER_ITEM_ENTITY : contains
+    ORDER_ENTITY ||--o{ ORDER_ITEM_ENTITY : has
+    
+    USER_ENTITY {
+        Long id PK
+        String username UK
+        String email UK
+        String password
+        LocalDateTime createdAt
     }
-
-    ROLE {
-        BIGINT id PK
-        VARCHAR name
+    
+    ROLE_ENTITY {
+        Long id PK
+        String name UK
     }
-
-    USER ||--|{ ROLE : "has"
-
+    
+    USER_ROLES {
+        Long user_id FK
+        Long role_id FK
+    }
+    
+    STOCK_ENTITY {
+        Long id PK
+        String name UK
+        Double currentStock
+        Double minimumStock
+        String unit
+        LocalDateTime lastUpdate
+    }
+    
+    WASTE_ENTITY {
+        Long id PK
+        Long ingredient_id FK
+        Double quantity
+        String unit
+        String reason
+        String details
+        LocalDateTime timestamp
+    }
+    
+    ORDER_ENTITY {
+        Long id PK
+        LocalDateTime orderDate
+        Integer itemCount
+        String notes
+        String status
+    }
+    
+    ORDER_ITEM_ENTITY {
+        Long id PK
+        Long order_id FK
+        Long stock_id FK
+        BigDecimal quantity
+        String unit
+        BigDecimal unitPrice
+    }
 ```
-
 ## 7. API
 
 > Base path: `/api`
@@ -228,3 +271,4 @@ erDiagram
 - **Paula** 
 
 ---
+
