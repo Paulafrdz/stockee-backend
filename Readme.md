@@ -271,7 +271,8 @@ erDiagram
 - **Paula** 
 
 ## Releated Projects 
-- **Stockeo Frontend** - [React Frontend Repository](https://github.com/Paulafrdz/stockee-frontend)
+- **Stockee Frontend** - [React Frontend Repository](https://github.com/Paulafrdz/stockee-frontend)
+
 
 
 
