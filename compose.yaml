@@ -3,11 +3,13 @@ version: "3.8"
 services:
   mysql:
     image: 'mysql:latest'
+    env_file:
+      - .env
     environment:
       - 'MYSQL_DATABASE=stockee'
-      - 'MYSQL_USER=myuser4'
-      - 'MYSQL_PASSWORD=factoria'
-      - 'MYSQL_ROOT_PASSWORD=factoriaf5'
+      - 'MYSQL_USER=${MYSQL_USER}'
+      - 'MYSQL_PASSWORD=${MYSQL_PASSWORD}'
+      - 'MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}'
     ports:
       - '7885:3306'
     volumes:
