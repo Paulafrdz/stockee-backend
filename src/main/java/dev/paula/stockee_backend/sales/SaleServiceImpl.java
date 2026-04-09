@@ -23,7 +23,9 @@ public class SaleServiceImpl implements ISaleService {
 
     @Override
     public SaleResponseDTO createSale(SaleRequestDTO request) {
-
+        if (request.getLines() == null || request.getLines().isEmpty()) {
+        throw new RuntimeException("La venta debe tener al menos un plato");
+    }
         SaleEntity sale = new SaleEntity();
         sale.setDate(LocalDateTime.now());
 
