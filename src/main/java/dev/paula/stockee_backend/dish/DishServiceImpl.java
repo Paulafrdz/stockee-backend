@@ -59,25 +59,56 @@ public class DishServiceImpl implements IDishService {
         dishRepository.deleteById(dishId);
     }
 
-    
     private DishResponseDTO convertToDTO(DishEntity dish) {
 
-        List<DishResponseDTO.DishIngredientResponseDTO> ingredients =
-                dish.getIngredients().stream()
-                        .map(ing -> new DishResponseDTO.DishIngredientResponseDTO(
-                                ing.getIngredient().getId(),
-                                ing.getIngredient().getName(),
-                                ing.getQuantity(),
-                                ing.getUnit()
-                        ))
-                        .collect(Collectors.toList());
+        List<DishResponseDTO.DishIngredientResponseDTO> ingredients = dish.getIngredients().stream()
+                .map(ing -> new DishResponseDTO.DishIngredientResponseDTO(
+                        ing.getIngredient().getId(),
+                        ing.getIngredient().getName(),
+                        ing.getQuantity(),
+                        ing.getUnit()))
+                .collect(Collectors.toList());
 
         return new DishResponseDTO(
                 dish.getId(),
                 dish.getName(),
                 dish.getDescription(),
                 dish.getIcon(),
-                ingredients
-        );
+                ingredients);
+    }
+
+    @Override
+    public DishResponseDTO updateDish(Long dishId, DishRequestDTO request) {
+
+        DishEntity dish = dishRepository.findById(dishId)
+                .orElseThrow(() -> new RuntimeException("Dish not found"));
+
+        dish.setName(request.getName());
+        dish.setDescription(request.getDescription());
+        dish.setIcon(request.getIcon());
+
+        // Clear old ingredients and replace with new ones
+        dish.getIngredients().clear();
+
+        List<DishIngredientEntity> updatedIngredients = request.getIngredients().stream()
+                .map(dto -> {
+                    StockEntity ingredient = stockRepository.findById(dto.getInventoryItemId())
+                            .orElseThrow(() -> new RuntimeException("Ingredient not found"));
+
+                    DishIngredientEntity dishIngredient = new DishIngredientEntity();
+                    dishIngredient.setDish(dish);
+                    dishIngredient.setIngredient(ingredient);
+                    dishIngredient.setQuantity(dto.getQuantity());
+                    dishIngredient.setUnit(dto.getUnit());
+
+                    return dishIngredient;
+                })
+                .collect(Collectors.toList());
+
+        dish.getIngredients().addAll(updatedIngredients);
+
+        DishEntity saved = dishRepository.save(dish);
+
+        return convertToDTO(saved);
     }
 }

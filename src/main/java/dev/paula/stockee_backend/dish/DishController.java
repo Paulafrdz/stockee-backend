@@ -27,4 +27,9 @@ public class DishController {
     public void deleteDish(@PathVariable Long dishId) {
         dishService.deleteDish(dishId);
     }
+
+    @PutMapping("/{dishId}")
+    public DishResponseDTO updateDish(@PathVariable Long dishId, @RequestBody DishRequestDTO request) {
+        return dishService.updateDish(dishId, request);
+    }
 }
