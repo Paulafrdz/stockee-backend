@@ -26,7 +26,7 @@ public class DishServiceImpl implements IDishService {
 
         List<DishIngredientEntity> ingredients = request.getIngredients().stream()
                 .map(dto -> {
-                    StockEntity ingredient = stockRepository.findById(dto.getInventoryItemId())
+                    StockEntity ingredient = stockRepository.findById(dto.getIngredientId())
                             .orElseThrow(() -> new RuntimeException("Ingredient not found"));
 
                     DishIngredientEntity dishIngredient = new DishIngredientEntity();
@@ -92,7 +92,7 @@ public class DishServiceImpl implements IDishService {
 
         List<DishIngredientEntity> updatedIngredients = request.getIngredients().stream()
                 .map(dto -> {
-                    StockEntity ingredient = stockRepository.findById(dto.getInventoryItemId())
+                    StockEntity ingredient = stockRepository.findById(dto.getIngredientId())
                             .orElseThrow(() -> new RuntimeException("Ingredient not found"));
 
                     DishIngredientEntity dishIngredient = new DishIngredientEntity();

@@ -14,7 +14,7 @@ public class DishRequestDTO {
 
     @Data
     public static class DishIngredientDTO {
-        private Long inventoryItemId;
+        private Long ingredientId;
         private Double quantity;
         private String unit;
     }
