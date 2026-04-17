@@ -2,11 +2,14 @@ package dev.paula.stockee_backend.orders;
 
 import dev.paula.stockee_backend.stock.StockEntity;
 import dev.paula.stockee_backend.stock.StockRepository;
+import dev.paula.stockee_backend.lotes.*;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +20,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final StockRepository stockRepository;
+    private final LoteRepository loteRepository;
 
     @Override
     public List<OrderResponseDTO> getRecommendedOrders() {
@@ -127,6 +131,20 @@ public class OrderServiceImpl implements OrderService {
             double newStock = stock.getCurrentStock() + itemRequest.getRecommendedQuantity();
             stock.setCurrentStock(newStock);
             stockRepository.save(stock);
+
+            if (stock.getShelfLifeDays() != null){
+
+                LocalDate orderDate = LocalDate.now();
+                LoteEntity lote = LoteEntity.builder()
+                    .stock(stock)
+                    .quantity(itemRequest.getRecommendedQuantity())
+                    .unit(itemRequest.getUnit())
+                    .orderDate(orderDate)
+                    .expiryDate(orderDate.plusDays(stock.getShelfLifeDays()))
+                    .build();
+                loteRepository.save(lote);
+
+            }
         }
         
         order.updateItemCount();

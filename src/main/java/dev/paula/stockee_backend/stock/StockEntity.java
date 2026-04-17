@@ -31,5 +31,8 @@ public class StockEntity {
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime lastUpdate;
 
+    @Column(name = "shelf_life_days")
+    private Integer shelfLifeDays; 
+
     
 }
