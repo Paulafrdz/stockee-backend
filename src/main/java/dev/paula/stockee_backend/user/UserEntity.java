@@ -46,4 +46,8 @@ public class UserEntity {
     @JoinTable(name = "roles_users", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<RoleEntity> roles;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean hasCompletedOnboarding = false;
+
 }

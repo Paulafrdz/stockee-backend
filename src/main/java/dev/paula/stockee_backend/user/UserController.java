@@ -4,7 +4,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import java.security.Principal;
 import java.util.List;
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/users") 
@@ -49,5 +52,20 @@ public class UserController {
         userService.deleteEntity(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/onboarding-status")
+    public ResponseEntity<Map<String, Boolean>> getOnboardingStatus(Principal principal){
+        UserEntity userEntity = userService.findByEmail(principal.getName());
+        return ResponseEntity.ok(Map.of("completed", userEntity.isHasCompletedOnboarding()));
+    }
+
+    @PatchMapping("/complete-onboarding")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> completeOnboarding(Principal principal){
+        userService.completeOnboarding(principal.getName());
+        return ResponseEntity.ok().build();
+    }
+
+    
 }
  

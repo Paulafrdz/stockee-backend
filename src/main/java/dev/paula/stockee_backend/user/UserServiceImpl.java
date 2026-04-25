@@ -29,6 +29,8 @@ public class UserServiceImpl implements UserService {
         }
 
         UserEntity user = userMapper.toEntity(dto);
+        user.setPassword(passwordEncoder.encode(dto.password()));
+
 
         // Asignar rol por defecto
         RoleEntity defaultRole = roleRepository.findByName("ROLE_USER")
@@ -74,5 +76,26 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Usuario no encontrado");
         }
         userRepository.deleteById(id);
+    }
+
+    @Override
+    public boolean getOnboardingStatus(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return user.isHasCompletedOnboarding();
+    }
+
+    @Override
+    public void completeOnboarding(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setHasCompletedOnboarding(true);
+        userRepository.save(user);
+    }
+
+     @Override
+    public UserEntity findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + email));
     }
 }
