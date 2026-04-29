@@ -49,6 +49,8 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                     .requestMatchers("/h2-console/**").permitAll()
                     .requestMatchers(HttpMethod.POST, endpoint + "/register").permitAll()
                     .requestMatchers(HttpMethod.POST, endpoint + "/auth/token").authenticated()
+                    .requestMatchers(HttpMethod.POST, endpoint + "/auth/forgot-password").permitAll()
+                    .requestMatchers(HttpMethod.POST, endpoint + "/auth/reset-password").permitAll()
                     
                     .requestMatchers(endpoint + "/users/**").authenticated()
                     .requestMatchers(endpoint + "/stock/**").authenticated()
@@ -83,7 +85,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

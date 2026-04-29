@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
 
 import dev.paula.stockee_backend.security.JwtService;
+import dev.paula.stockee_backend.password.PasswordResetService;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -23,6 +24,9 @@ class AuthControllerTest {
 
     @InjectMocks
     private AuthController authController;
+
+    @Mock
+    private PasswordResetService passwordResetService;
 
     @Test
     void token_WithValidAuthentication_ShouldReturnToken() {
@@ -57,7 +61,7 @@ class AuthControllerTest {
     @Test
     void constructor_ShouldInitializeDependencies() {
         // Arrange & Act
-        AuthController controller = new AuthController(tokenService);
+        AuthController controller = new AuthController(tokenService, passwordResetService);
 
         // Assert
         assertNotNull(controller);
