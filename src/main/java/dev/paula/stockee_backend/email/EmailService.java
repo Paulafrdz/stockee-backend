@@ -1,9 +1,14 @@
 package dev.paula.stockee_backend.email;
 
-import org.springframework.mail.SimpleMailMessage;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+
 import org.springframework.stereotype.Service;
 
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -13,21 +18,32 @@ public class EmailService {
     private final JavaMailSender mailSender;
 
     public void sendPasswordResetEmail(String toEmail, String token) {
-        String resetLink =  "http://localhost:5173/reset-password?token=" + token;
+        try {
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject("Restablecer contraseña stockee.");
-        message.setText("Hola,\n\n" +
-            "Recibimos una solicitud para restablecer tu contraseña.\n\n" +
-            "Pulsa el siguiente enlace para crear una nueva contraseña:\n" +
-            resetLink + "\n\n" +
-            "Este enlace expira en 30 minutos.\n\n" +
-            "Si no solicitaste este cambio, ignora este correo.\n\n" +
-            "— El equipo de Stockeo"
-        );
+            String resetLink = "http://localhost:5173/reset-password?token=" + token;
+            String html = loadTemplate("ResetPasswordEmail.html")
+                .replace("{{resetLink}}", resetLink);
 
-        mailSender.send(message);
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject("Restablecer contraseña stockee.");
+            helper.setText(html, true);
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al enviar el correo: " + e.getMessage());
+        }
+    }
+
+    private String loadTemplate(String filename) {
+        try{
+            ClassPathResource resource = new ClassPathResource("templates/" + filename);
+            return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al cargar el template: " + filename);
+        }
     }
     
 }
