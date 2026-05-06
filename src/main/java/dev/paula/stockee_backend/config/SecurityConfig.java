@@ -47,8 +47,8 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .headers(header -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/h2-console/**").permitAll()
-                    .requestMatchers(HttpMethod.POST, endpoint + "/register").permitAll()
-                    .requestMatchers(HttpMethod.POST, endpoint + "/auth/token").authenticated()
+                    .requestMatchers(HttpMethod.POST, endpoint + "/auth/register").permitAll()
+                    .requestMatchers(HttpMethod.POST, endpoint + "/auth/token").permitAll()
                     .requestMatchers(HttpMethod.POST, endpoint + "/auth/forgot-password").permitAll()
                     .requestMatchers(HttpMethod.POST, endpoint + "/auth/reset-password").permitAll()
                     
