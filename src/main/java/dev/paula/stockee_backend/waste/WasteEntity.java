@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+import dev.paula.stockee_backend.user.UserEntity;
+
 @Entity
 @Table(name = "waste")
 @Data
@@ -35,6 +37,10 @@ public class WasteEntity {
 
     @Column(nullable = false)
     private LocalDateTime timestamp;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     public WasteEntity(StockEntity ingredient, Double quantity, String unit, 
                       String reason, String details) {

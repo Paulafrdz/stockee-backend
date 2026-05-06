@@ -7,6 +7,7 @@ import dev.paula.stockee_backend.dish.DishRepository;
 import dev.paula.stockee_backend.implementations.ISaleService;
 import dev.paula.stockee_backend.stock.StockEntity;
 import dev.paula.stockee_backend.stock.StockRepository;
+import dev.paula.stockee_backend.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ public class SaleServiceImpl implements ISaleService {
     private final SaleRepository saleRepository;
     private final DishRepository dishRepository;
     private final StockRepository stockRepository;
+    private final CurrentUserService currentUserService;
 
     @Override
     public SaleResponseDTO createSale(SaleRequestDTO request) {
@@ -28,6 +30,7 @@ public class SaleServiceImpl implements ISaleService {
     }
         SaleEntity sale = new SaleEntity();
         sale.setDate(LocalDateTime.now());
+        sale.setUser(currentUserService.get());
 
         List<SaleLineEntity> lines = request.getLines().stream()
                 .map(dto -> {
@@ -59,7 +62,7 @@ public class SaleServiceImpl implements ISaleService {
 
     @Override
     public List<SaleResponseDTO> getAllSales() {
-        return saleRepository.findAll()
+        return saleRepository.findAllByUser(currentUserService.get())
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -67,7 +70,7 @@ public class SaleServiceImpl implements ISaleService {
 
     @Override
     public void deleteSale(Long saleId) {
-        SaleEntity sale = saleRepository.findById(saleId)
+        SaleEntity sale = saleRepository.findByIdAndUser(saleId, currentUserService.get())
             .orElseThrow(() -> new RuntimeException("Sale not found"));
 
         // Return stock for each line before deleting

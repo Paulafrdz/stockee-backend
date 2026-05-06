@@ -1,5 +1,10 @@
 package dev.paula.stockee_backend.orders;
 
+import dev.paula.stockee_backend.security.CurrentUserService;
+import dev.paula.stockee_backend.stock.StockEntity;
+import dev.paula.stockee_backend.stock.StockRepository;
+import dev.paula.stockee_backend.user.UserEntity;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,16 +14,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import dev.paula.stockee_backend.stock.StockEntity;
-import dev.paula.stockee_backend.stock.StockRepository;
-
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,12 +32,23 @@ class OrderServiceImplTest {
     @Mock
     private OrderRepository orderRepository;
 
+    @Mock
+    private CurrentUserService currentUserService;
+
     @InjectMocks
     private OrderServiceImpl orderService;
 
+    private UserEntity mockUser() {
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+        user.setEmail("test@test.com");
+        return user;
+    }
+
     @Test
     void getRecommendedOrders_WithLowStock_ShouldReturnHighPriority() {
-        // Arrange
+        UserEntity user = mockUser();
+
         StockEntity lowStock = new StockEntity();
         lowStock.setId(1L);
         lowStock.setName("Flour");
@@ -43,43 +56,41 @@ class OrderServiceImplTest {
         lowStock.setMinimumStock(20.0);
         lowStock.setUnit("kg");
 
-        when(stockRepository.findAll()).thenReturn(Arrays.asList(lowStock));
+        when(currentUserService.get()).thenReturn(user);
+        when(stockRepository.findAllByUser(user)).thenReturn(Arrays.asList(lowStock));
 
-        // Act
         List<OrderResponseDTO> result = orderService.getRecommendedOrders();
 
-        // Assert
         assertEquals(1, result.size());
-        OrderResponseDTO recommendation = result.get(0);
-        assertEquals("high", recommendation.getPriority());
-        assertTrue(recommendation.getRecommendedQuantity() > 0);
+        assertEquals("high", result.get(0).getPriority());
+        assertTrue(result.get(0).getRecommendedQuantity() > 0);
     }
 
     @Test
     void getRecommendedOrders_WithAdequateStock_ShouldReturnLowPriority() {
-        // Arrange
-        StockEntity adequateStock = new StockEntity();
-        adequateStock.setId(1L);
-        adequateStock.setName("Sugar");
-        adequateStock.setCurrentStock(25.0);
-        adequateStock.setMinimumStock(20.0);
-        adequateStock.setUnit("kg");
+        UserEntity user = mockUser();
 
-        when(stockRepository.findAll()).thenReturn(Arrays.asList(adequateStock));
+        StockEntity stock = new StockEntity();
+        stock.setId(1L);
+        stock.setName("Sugar");
+        stock.setCurrentStock(25.0);
+        stock.setMinimumStock(20.0);
+        stock.setUnit("kg");
 
-        // Act
+        when(currentUserService.get()).thenReturn(user);
+        when(stockRepository.findAllByUser(user)).thenReturn(Arrays.asList(stock));
+
         List<OrderResponseDTO> result = orderService.getRecommendedOrders();
 
-        // Assert
         assertEquals(1, result.size());
-        OrderResponseDTO recommendation = result.get(0);
-        assertEquals("low", recommendation.getPriority());
-        assertEquals(0.0, recommendation.getRecommendedQuantity());
+        assertEquals("low", result.get(0).getPriority());
+        assertEquals(0.0, result.get(0).getRecommendedQuantity());
     }
 
     @Test
     void createOrder_WithValidItem_ShouldUpdateStock() {
-        // Arrange
+        UserEntity user = mockUser();
+
         OrderItemRequestDTO item = new OrderItemRequestDTO();
         item.setId(1L);
         item.setRecommendedQuantity(10.0);
@@ -89,40 +100,38 @@ class OrderServiceImplTest {
 
         StockEntity stock = new StockEntity();
         stock.setId(1L);
-        stock.setName("Flour");
         stock.setCurrentStock(5.0);
-        stock.setMinimumStock(20.0);
         stock.setUnit("kg");
 
-        when(stockRepository.findById(1L)).thenReturn(Optional.of(stock));
-        when(orderRepository.save(any(OrderEntity.class))).thenReturn(new OrderEntity());
+        when(currentUserService.get()).thenReturn(user);
+        when(stockRepository.findByIdAndUser(eq(1L), eq(user)))
+                .thenReturn(Optional.of(stock));
+        when(orderRepository.save(any(OrderEntity.class)))
+                .thenReturn(new OrderEntity());
 
-        // Act
         orderService.createOrder(request);
 
-        // Assert
         verify(stockRepository).save(stock);
-        assertEquals(15.0, stock.getCurrentStock()); // 5.0 + 10.0
+        assertEquals(15.0, stock.getCurrentStock());
     }
 
     @Test
     void getOrderHistory_ShouldReturnConvertedDTOs() {
-        // Arrange
-        int limit = 5;
-        
+        UserEntity user = mockUser();
+
         OrderEntity order = new OrderEntity();
         order.setId(1L);
         order.setOrderDate(LocalDateTime.now());
         order.setItemCount(1);
 
-        Page<OrderEntity> orderPage = new PageImpl<>(Arrays.asList(order));
-        when(orderRepository.findAllByOrderByOrderDateDesc(any(PageRequest.class)))
-            .thenReturn(orderPage);
+        Page<OrderEntity> page = new PageImpl<>(List.of(order));
 
-        // Act
-        List<OrderHistoryResponseDTO> result = orderService.getOrderHistory(limit);
+        when(currentUserService.get()).thenReturn(user);
+        when(orderRepository.findAllByUserOrderByOrderDateDesc(eq(user), any(PageRequest.class)))
+                .thenReturn(page);
 
-        // Assert
+        List<OrderHistoryResponseDTO> result = orderService.getOrderHistory(5);
+
         assertEquals(1, result.size());
         assertEquals(1L, result.get(0).getId());
     }

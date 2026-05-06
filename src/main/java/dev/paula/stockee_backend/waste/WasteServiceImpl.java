@@ -5,6 +5,8 @@ import dev.paula.stockee_backend.stock.StockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import dev.paula.stockee_backend.security.CurrentUserService;
+import dev.paula.stockee_backend.user.UserEntity;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,11 +17,15 @@ public class WasteServiceImpl implements WasteService {
 
     private final WasteRepository wasteRepository;
     private final StockRepository stockRepository;
+    private final CurrentUserService currentUserService;
+
 
     @Override
     @Transactional
     public WasteResponseDTO registerWaste(WasteRequestDTO wasteRequest) {
-        StockEntity ingredient = stockRepository.findById(wasteRequest.getIngredientId())
+        UserEntity user = currentUserService.get();
+
+        StockEntity ingredient = stockRepository.findByIdAndUser(wasteRequest.getIngredientId(), user)
                 .orElseThrow(() -> new RuntimeException("Ingrediente no encontrado"));
 
         if (ingredient.getCurrentStock() < wasteRequest.getQuantity()) {
@@ -46,14 +52,15 @@ public class WasteServiceImpl implements WasteService {
 
     @Override
     public List<WasteResponseDTO> getAllWaste() {
-        return wasteRepository.findAll().stream()
+        return wasteRepository.findAllByUser(currentUserService.get())
+                .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<WasteResponseDTO> getWasteByIngredient(Long ingredientId) {
-        return wasteRepository.findByIngredientId(ingredientId).stream()
+        return wasteRepository.findByIngredientIdAndUser(ingredientId, currentUserService.get()).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
