@@ -7,25 +7,30 @@ import java.time.LocalDateTime;
 import java.util.List;
 import dev.paula.stockee_backend.lotes.LoteRepository; 
 import dev.paula.stockee_backend.lotes.LoteEntity; 
+import dev.paula.stockee_backend.security.CurrentUserService;
+
 
 @Service
 public class StockServiceImpl implements StockService {
 
     private final StockRepository repository;
     private final LoteRepository loteRepository;
+    private final CurrentUserService currentUserService;
 
-    public StockServiceImpl(StockRepository repository, LoteRepository loteRepository) {
+    public StockServiceImpl(StockRepository repository, LoteRepository loteRepository, CurrentUserService currentUserService) {
         this.repository = repository;
         this.loteRepository = loteRepository;
+        this.currentUserService = currentUserService;
     }
 
     @Override
     public List<StockEntity> getAll() {
-        return repository.findAll();
+        return repository.findAllByUser(currentUserService.get());
     }
 
     @Override
     public StockEntity addItem(StockEntity item) {
+        item.setUser(currentUserService.get());
         item.setLastUpdate(LocalDateTime.now());
         StockEntity saved = repository.save(item);
 
@@ -45,7 +50,7 @@ public class StockServiceImpl implements StockService {
 
     @Override
     public StockEntity updateStock(Long id, double newStock) {
-        StockEntity item = repository.findById(id)
+        StockEntity item = repository.findByIdAndUser(id, currentUserService.get())
                 .orElseThrow(() -> new RuntimeException("Item no encontrado"));
         item.setCurrentStock(newStock);
         item.setLastUpdate(LocalDateTime.now());
@@ -54,7 +59,7 @@ public class StockServiceImpl implements StockService {
 
     @Override
     public StockEntity updateItem(Long id, StockEntity updatedItem) {
-        StockEntity existingItem = repository.findById(id)
+        StockEntity existingItem = repository.findByIdAndUser(id, currentUserService.get())
                 .orElseThrow(() -> new RuntimeException("Item no encontrado"));
         
         boolean hadShelfLifeBefore = existingItem.getShelfLifeDays() != null;
@@ -88,6 +93,8 @@ public class StockServiceImpl implements StockService {
 
     @Override
     public void deleteItem(Long id) {
-        repository.deleteById(id);
+        StockEntity item = repository.findByIdAndUser(id, currentUserService.get())
+            .orElseThrow(() -> new RuntimeException("Item no encontrado"));
+        repository.delete(item); 
     }
 }

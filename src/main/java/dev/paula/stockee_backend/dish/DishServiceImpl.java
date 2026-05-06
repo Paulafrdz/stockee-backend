@@ -5,6 +5,8 @@ import dev.paula.stockee_backend.stock.StockEntity;
 import dev.paula.stockee_backend.stock.StockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import dev.paula.stockee_backend.security.CurrentUserService;
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +17,7 @@ public class DishServiceImpl implements IDishService {
 
     private final DishRepository dishRepository;
     private final StockRepository stockRepository;
+    private final CurrentUserService currentUserService;
 
     @Override
     public DishResponseDTO createDish(DishRequestDTO request) {
@@ -23,6 +26,7 @@ public class DishServiceImpl implements IDishService {
         dish.setName(request.getName());
         dish.setDescription(request.getDescription());
         dish.setIcon(request.getIcon());
+        dish.setUser(currentUserService.get());
 
         List<DishIngredientEntity> ingredients = request.getIngredients().stream()
                 .map(dto -> {
@@ -48,7 +52,7 @@ public class DishServiceImpl implements IDishService {
 
     @Override
     public List<DishResponseDTO> getAllDishes() {
-        return dishRepository.findAll()
+        return dishRepository.findAllByUser(currentUserService.get())
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
@@ -56,7 +60,9 @@ public class DishServiceImpl implements IDishService {
 
     @Override
     public void deleteDish(Long dishId) {
-        dishRepository.deleteById(dishId);
+        DishEntity dish = dishRepository.findByIdAndUser(dishId, currentUserService.get())
+                .orElseThrow(() -> new RuntimeException("Plato no encontrado"));
+        dishRepository.delete(dish);
     }
 
     private DishResponseDTO convertToDTO(DishEntity dish) {
@@ -80,7 +86,7 @@ public class DishServiceImpl implements IDishService {
     @Override
     public DishResponseDTO updateDish(Long dishId, DishRequestDTO request) {
 
-        DishEntity dish = dishRepository.findById(dishId)
+        DishEntity dish = dishRepository.findByIdAndUser(dishId, currentUserService.get())
                 .orElseThrow(() -> new RuntimeException("Dish not found"));
 
         dish.setName(request.getName());

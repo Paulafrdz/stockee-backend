@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import dev.paula.stockee_backend.user.UserEntity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -34,5 +35,8 @@ public class StockEntity {
     @Column(name = "shelf_life_days")
     private Integer shelfLifeDays; 
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
     
 }

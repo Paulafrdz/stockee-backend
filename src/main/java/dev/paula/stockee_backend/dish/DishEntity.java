@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import dev.paula.stockee_backend.user.UserEntity;
+
 
 @Entity
 @Table(name = "dishes")
@@ -24,4 +26,8 @@ public class DishEntity {
 
     @OneToMany(mappedBy = "dish", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DishIngredientEntity> ingredients;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 }
