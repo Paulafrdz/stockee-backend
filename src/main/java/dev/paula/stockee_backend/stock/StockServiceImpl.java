@@ -83,6 +83,7 @@ public class StockServiceImpl implements StockService {
                 .unit(saved.getUnit())
                 .orderDate(today)
                 .expiryDate(today.plusDays(saved.getShelfLifeDays()))
+                .user(currentUserService.get())
                 .build();
 
             loteRepository.save(lote);

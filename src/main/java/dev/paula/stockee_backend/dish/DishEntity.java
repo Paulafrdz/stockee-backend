@@ -27,7 +27,7 @@ public class DishEntity {
     @OneToMany(mappedBy = "dish", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DishIngredientEntity> ingredients;
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 }

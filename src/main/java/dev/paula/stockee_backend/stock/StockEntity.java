@@ -35,7 +35,7 @@ public class StockEntity {
     @Column(name = "shelf_life_days")
     private Integer shelfLifeDays; 
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
     

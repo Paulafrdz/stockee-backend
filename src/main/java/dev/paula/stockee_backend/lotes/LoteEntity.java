@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
 
+import dev.paula.stockee_backend.user.UserEntity;
+
 @Entity
 @Table(name = "lotes")
 @Getter
@@ -29,4 +31,9 @@ public class LoteEntity {
     private LocalDate orderDate;
 
     private LocalDate expiryDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
+
 }
