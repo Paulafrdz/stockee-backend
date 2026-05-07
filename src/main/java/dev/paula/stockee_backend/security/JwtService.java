@@ -13,13 +13,17 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
+import dev.paula.stockee_backend.user.UserRepository;
+
 @Service
 public class JwtService {
     
     private final JwtEncoder jwtEncoder;
+    private final UserRepository userRepository;
 
-    public JwtService(JwtEncoder jwtEncoder) {
+    public JwtService(JwtEncoder jwtEncoder, UserRepository userRepository) {
         this.jwtEncoder = jwtEncoder;
+        this.userRepository = userRepository;
     }
 
     public String generateToken(Authentication authentication) {
@@ -29,12 +33,17 @@ public class JwtService {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(" "));
 
+        String username = userRepository.findByEmail(authentication.getName())
+            .map(user -> user.getUsername())
+            .orElse(authentication.getName());
+
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
                 .subject(authentication.getName())
                 .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .claim("scope", scope)
+                .claim("username", username)
                 .build();
 
         var encoderParameters = JwtEncoderParameters.from(
