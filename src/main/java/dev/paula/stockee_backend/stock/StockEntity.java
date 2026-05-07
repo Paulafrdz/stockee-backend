@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 import dev.paula.stockee_backend.user.UserEntity;
+import dev.paula.stockee_backend.lotes.LoteEntity;
+
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -38,5 +42,8 @@ public class StockEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
+
+    @OneToMany(mappedBy = "stock", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LoteEntity> lotes;
     
 }
