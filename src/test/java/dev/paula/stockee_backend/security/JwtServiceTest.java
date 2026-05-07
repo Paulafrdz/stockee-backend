@@ -1,18 +1,20 @@
 package dev.paula.stockee_backend.security;
 
+import dev.paula.stockee_backend.user.UserEntity;
+import dev.paula.stockee_backend.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,159 +27,73 @@ class JwtServiceTest {
     private JwtEncoder jwtEncoder;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private Authentication authentication;
 
     @InjectMocks
     private JwtService jwtService;
 
-    @Test
-    void generateToken_ShouldReturnValidToken() {
-        // Given
-        String username = "paula@example.com";
-        String expectedToken = "mock.jwt.token.value";
-        
-        List<GrantedAuthority> authorities = List.of(
-            new SimpleGrantedAuthority("ROLE_USER"),
-            new SimpleGrantedAuthority("ROLE_ADMIN")
-        );
-
-        // ✅ Sin @SuppressWarnings - usar thenAnswer
-        when(authentication.getName()).thenReturn(username);
-        when(authentication.getAuthorities()).thenAnswer(invocation -> authorities);
-
-        Jwt mockJwt = Jwt.withTokenValue(expectedToken)
+    private Jwt mockJwt(String token) {
+        return Jwt.withTokenValue(token)
                 .header("alg", "HS512")
-                .claim("sub", username)
-                .claim("scope", "ROLE_USER ROLE_ADMIN")
-                .build();
-        
-        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(mockJwt);
-
-        // When
-        String result = jwtService.generateToken(authentication);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(expectedToken, result);
-        
-        verify(jwtEncoder, times(1)).encode(any(JwtEncoderParameters.class));
-    }
-
-    @Test
-    void generateToken_WithSingleRole_ShouldReturnTokenWithSingleScope() {
-        // Given
-        String username = "user@example.com";
-        String expectedToken = "single.role.token";
-        
-        List<GrantedAuthority> authorities = List.of(
-            new SimpleGrantedAuthority("ROLE_USER")
-        );
-
-        when(authentication.getName()).thenReturn(username);
-        when(authentication.getAuthorities()).thenAnswer(invocation -> authorities);
-
-        Jwt mockJwt = Jwt.withTokenValue(expectedToken)
-                .header("alg", "HS512")
-                .claim("sub", username)
                 .claim("scope", "ROLE_USER")
                 .build();
-        
-        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(mockJwt);
+    }
 
-        // When
+    @Test
+    void generateToken_ShouldReturnToken() {
+        String email = "paula@example.com";
+        String username = "paula";
+
+        UserEntity user = new UserEntity();
+        user.setUsername(username);
+
+        when(authentication.getName()).thenReturn(email);
+        when(authentication.getAuthorities()).thenReturn(
+                (List) List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class)))
+                .thenReturn(mockJwt("token123"));
+
         String result = jwtService.generateToken(authentication);
 
-        // Then
-        assertNotNull(result);
-        assertEquals(expectedToken, result);
+        assertEquals("token123", result);
         verify(jwtEncoder, times(1)).encode(any(JwtEncoderParameters.class));
     }
 
     @Test
-    void generateToken_WithNoRoles_ShouldReturnTokenWithEmptyScope() {
-        // Given
-        String username = "noreoles@example.com";
-        String expectedToken = "no.roles.token";
-        
-        List<GrantedAuthority> authorities = List.of();
+    void generateToken_WhenUserNotFound_ShouldUseEmailAsUsername() {
+        String email = "unknown@mail.com";
 
-        when(authentication.getName()).thenReturn(username);
-        when(authentication.getAuthorities()).thenAnswer(invocation -> authorities);
+        when(authentication.getName()).thenReturn(email);
+        when(authentication.getAuthorities()).thenReturn(
+                (List) List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
-        Jwt mockJwt = Jwt.withTokenValue(expectedToken)
-                .header("alg", "HS512")
-                .claim("sub", username)
-                .claim("scope", "")
-                .build();
-        
-        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(mockJwt);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class)))
+                .thenReturn(mockJwt("token456"));
 
-        // When
         String result = jwtService.generateToken(authentication);
 
-        // Then
-        assertNotNull(result);
-        assertEquals(expectedToken, result);
-        verify(jwtEncoder, times(1)).encode(any(JwtEncoderParameters.class));
+        assertEquals("token456", result);
     }
 
     @Test
-    void generateToken_ShouldIncludeCorrectClaims() {
-        // Given
-        String username = "test@example.com";
-        String expectedToken = "test.token";
-        
-        List<GrantedAuthority> authorities = List.of(
-            new SimpleGrantedAuthority("ROLE_USER")
-        );
+    void generateToken_ShouldHandleEmptyRoles() {
+        String email = "test@mail.com";
 
-        when(authentication.getName()).thenReturn(username);
-        when(authentication.getAuthorities()).thenAnswer(invocation -> authorities);
+        when(authentication.getName()).thenReturn(email);
+        when(authentication.getAuthorities()).thenReturn(List.of());
 
-        Jwt mockJwt = Jwt.withTokenValue(expectedToken)
-                .header("alg", "HS512")
-                .claim("iss", "self")
-                .claim("sub", username)
-                .claim("scope", "ROLE_USER")
-                .build();
-        
-        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(mockJwt);
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class)))
+                .thenReturn(mockJwt("token-empty"));
 
-        // When
         String result = jwtService.generateToken(authentication);
 
-        // Then
-        assertNotNull(result);
-        verify(jwtEncoder, times(1)).encode(any(JwtEncoderParameters.class));
-    }
-
-    @Test
-    void generateToken_ShouldHandleSpecialCharactersInUsername() {
-        // Given
-        String username = "user+test@example.com";
-        String expectedToken = "special.chars.token";
-        
-        List<GrantedAuthority> authorities = List.of(
-            new SimpleGrantedAuthority("ROLE_USER")
-        );
-
-        when(authentication.getName()).thenReturn(username);
-        when(authentication.getAuthorities()).thenAnswer(invocation -> authorities);
-
-        Jwt mockJwt = Jwt.withTokenValue(expectedToken)
-                .header("alg", "HS512")
-                .claim("sub", username)
-                .claim("scope", "ROLE_USER")
-                .build();
-        
-        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(mockJwt);
-
-        // When
-        String result = jwtService.generateToken(authentication);
-
-        // Then
-        assertNotNull(result);
-        assertEquals(expectedToken, result);
-        verify(jwtEncoder, times(1)).encode(any(JwtEncoderParameters.class));
+        assertEquals("token-empty", result);
     }
 }

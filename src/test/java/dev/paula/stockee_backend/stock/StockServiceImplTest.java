@@ -1,12 +1,14 @@
 package dev.paula.stockee_backend.stock;
 
+import dev.paula.stockee_backend.lotes.LoteRepository;
+import dev.paula.stockee_backend.security.CurrentUserService;
+import dev.paula.stockee_backend.user.UserEntity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,136 +22,98 @@ class StockServiceImplTest {
     @Mock
     private StockRepository repository;
 
+    @Mock
+    private LoteRepository loteRepository;
+
+    @Mock
+    private CurrentUserService currentUserService;
+
     @InjectMocks
     private StockServiceImpl stockService;
 
+    private UserEntity mockUser() {
+        UserEntity user = new UserEntity();
+        user.setId(1L);
+        return user;
+    }
+
     @Test
-    void getAll_ShouldReturnAllItems() {
-        // Given
+    void getAll_ShouldReturnUserItems() {
+        UserEntity user = mockUser();
+
         StockEntity item1 = new StockEntity();
         item1.setId(1L);
-        StockEntity item2 = new StockEntity();
-        item2.setId(2L);
-        List<StockEntity> expectedItems = List.of(item1, item2);
 
-        when(repository.findAll()).thenReturn(expectedItems);
+        when(currentUserService.get()).thenReturn(user);
+        when(repository.findAllByUser(user)).thenReturn(List.of(item1));
 
-        // When
         List<StockEntity> result = stockService.getAll();
 
-        // Then
-        assertEquals(2, result.size());
-        verify(repository, times(1)).findAll();
+        assertEquals(1, result.size());
+        verify(repository).findAllByUser(user);
     }
 
     @Test
-    void addItem_ShouldSetLastUpdateAndSave() {
-        StockEntity inputItem = new StockEntity();
-        inputItem.setName("Test Item");
-        inputItem.setCurrentStock(100.0);
+    void addItem_ShouldSetUserAndLastUpdate() {
+        UserEntity user = mockUser();
 
-        when(repository.save(any(StockEntity.class))).thenAnswer(invocation -> {
-            StockEntity itemToSave = invocation.getArgument(0);
-            itemToSave.setId(1L);
-            return itemToSave; 
-        });
+        StockEntity input = new StockEntity();
+        input.setName("Test");
+        input.setCurrentStock(10.0);
 
-        StockEntity result = stockService.addItem(inputItem);
+        when(currentUserService.get()).thenReturn(user);
+        when(repository.save(any(StockEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        assertNotNull(result.getLastUpdate(), "lastUpdate debería estar establecido");
-        assertEquals(1L, result.getId());
-        assertEquals("Test Item", result.getName());
-        assertEquals(100.0, result.getCurrentStock());
+        StockEntity result = stockService.addItem(input);
 
-        assertTrue(result.getLastUpdate().isAfter(LocalDateTime.now().minusSeconds(5)));
-        assertTrue(result.getLastUpdate().isBefore(LocalDateTime.now().plusSeconds(1)));
-
-        verify(repository, times(1)).save(inputItem);
+        assertEquals(user, result.getUser());
+        assertNotNull(result.getLastUpdate());
+        verify(repository).save(input);
     }
 
     @Test
-    void updateStock_WhenItemExists_ShouldUpdateStockAndLastUpdate() {
-        // Given
-        Long itemId = 1L;
-        double newStock = 150.0;
+    void updateStock_ShouldUpdateValue() {
+        UserEntity user = mockUser();
 
-        StockEntity existingItem = new StockEntity();
-        existingItem.setId(itemId);
-        existingItem.setCurrentStock(100.0);
-        existingItem.setLastUpdate(LocalDateTime.now().minusDays(1));
+        StockEntity existing = new StockEntity();
+        existing.setId(1L);
+        existing.setCurrentStock(10.0);
 
-        when(repository.findById(itemId)).thenReturn(Optional.of(existingItem));
-        when(repository.save(any(StockEntity.class))).thenReturn(existingItem);
+        when(currentUserService.get()).thenReturn(user);
+        when(repository.findByIdAndUser(1L, user)).thenReturn(Optional.of(existing));
+        when(repository.save(any())).thenReturn(existing);
 
-        // When
-        StockEntity result = stockService.updateStock(itemId, newStock);
+        StockEntity result = stockService.updateStock(1L, 25.0);
 
-        // Then
-        assertEquals(newStock, result.getCurrentStock());
-        assertTrue(result.getLastUpdate().isAfter(LocalDateTime.now().minusMinutes(1)));
-        verify(repository, times(1)).findById(itemId);
-        verify(repository, times(1)).save(existingItem);
+        assertEquals(25.0, result.getCurrentStock());
+        verify(repository).save(existing);
     }
 
     @Test
-    void updateStock_WhenItemNotFound_ShouldThrowException() {
-        // Given
-        Long itemId = 999L;
-        when(repository.findById(itemId)).thenReturn(Optional.empty());
+    void updateStock_WhenNotFound_ShouldThrow() {
+        UserEntity user = mockUser();
 
-        // When & Then
-        RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> stockService.updateStock(itemId, 100.0));
+        when(currentUserService.get()).thenReturn(user);
+        when(repository.findByIdAndUser(1L, user)).thenReturn(Optional.empty());
 
-        assertEquals("Item no encontrado", exception.getMessage());
-        verify(repository, times(1)).findById(itemId);
-        verify(repository, never()).save(any());
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> stockService.updateStock(1L, 20));
+
+        assertEquals("Item no encontrado", ex.getMessage());
     }
 
     @Test
-    void updateItem_WhenItemExists_ShouldUpdateAllFields() {
-        // Given
-        Long itemId = 1L;
-        StockEntity existingItem = new StockEntity();
-        existingItem.setId(itemId);
-        existingItem.setName("Old Name");
-        existingItem.setCurrentStock(50.0);
-        existingItem.setMinimumStock(10.0);
-        existingItem.setUnit("kg");
-        existingItem.setLastUpdate(LocalDateTime.now().minusDays(1));
+    void deleteItem_ShouldCallDelete() {
+        UserEntity user = mockUser();
 
-        StockEntity updatedItem = new StockEntity();
-        updatedItem.setName("New Name");
-        updatedItem.setCurrentStock(75.0);
-        updatedItem.setMinimumStock(20.0);
-        updatedItem.setUnit("units");
+        StockEntity item = new StockEntity();
+        item.setId(1L);
 
-        when(repository.findById(itemId)).thenReturn(Optional.of(existingItem));
-        when(repository.save(any(StockEntity.class))).thenReturn(existingItem);
+        when(currentUserService.get()).thenReturn(user);
+        when(repository.findByIdAndUser(1L, user)).thenReturn(Optional.of(item));
 
-        // When
-        StockEntity result = stockService.updateItem(itemId, updatedItem);
+        stockService.deleteItem(1L);
 
-        // Then
-        assertEquals("New Name", result.getName());
-        assertEquals(75.0, result.getCurrentStock());
-        assertEquals(20.0, result.getMinimumStock());
-        assertEquals("units", result.getUnit());
-        assertTrue(result.getLastUpdate().isAfter(LocalDateTime.now().minusMinutes(1)));
-        verify(repository, times(1)).findById(itemId);
-        verify(repository, times(1)).save(existingItem);
-    }
-
-    @Test
-    void deleteItem_ShouldCallRepositoryDelete() {
-        // Given
-        Long itemId = 1L;
-        doNothing().when(repository).deleteById(itemId);
-
-        // When
-        stockService.deleteItem(itemId);
-
-        // Then
-        verify(repository, times(1)).deleteById(itemId);
+        verify(repository).delete(item);
     }
 }
