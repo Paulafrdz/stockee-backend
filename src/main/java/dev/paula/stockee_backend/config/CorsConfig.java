@@ -13,7 +13,7 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(@org.springframework.lang.NonNull CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://stockee-frontend.vercel.app/login")
+                        .allowedOrigins("https://stockee-frontend.vercel.app")
                         .allowedMethods("*")
                         .allowedHeaders("*")
                         .allowCredentials(true);
