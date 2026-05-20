@@ -37,6 +37,8 @@ public class SecurityConfig {
     private String endpoint;
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+    System.out.println("ENDPOINT CONFIG: " + endpoint);
     http
             .cors(cors -> cors.configurationSource(corsConfiguration()))
             .csrf(csrf -> csrf
