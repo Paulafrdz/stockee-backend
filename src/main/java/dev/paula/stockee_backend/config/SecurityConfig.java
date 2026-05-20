@@ -1,7 +1,5 @@
 package dev.paula.stockee_backend.config;
 
-import static org.springframework.security.config.Customizer.withDefaults;
-
 import java.util.Arrays;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -62,8 +60,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
                     
                     .anyRequest().authenticated())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.decoder(jwtDecoder())))
-            .httpBasic(withDefaults());
+            .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.decoder(jwtDecoder())));
 
     return http.build();
 }
