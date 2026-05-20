@@ -38,7 +38,6 @@ public class SecurityConfig {
 @Bean
 public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-    System.out.println("ENDPOINT CONFIG: " + endpoint);
     http
             .cors(cors -> cors.configurationSource(corsConfiguration()))
             .csrf(csrf -> csrf
@@ -47,6 +46,10 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
             .headers(header -> header.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/h2-console/**").permitAll()
+
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+
                     .requestMatchers(HttpMethod.POST, endpoint + "/auth/token").permitAll()
                     .requestMatchers(HttpMethod.POST, endpoint + "/auth/register").permitAll()
                     .requestMatchers(HttpMethod.POST, endpoint + "/auth/forgot-password").permitAll()
